@@ -9,21 +9,7 @@ on:
     types: [opened, synchronize]
 
 jobs:
-  tag_release:
-    runs-on: ubuntu-20.04
-    if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message), '#skip') }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Bump version and push tag
-        id: bump_version
-        uses: anothrNick/github-tag-action@a2c70ae13a881faf2b4953baaa9e49731997ab36
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEFAULT_BUMP: patch
-    outputs:
-      new_version: ${{ steps.bump_version.outputs.new_tag }}
   simple_deployment_pipeline:
-    needs: [tag_release]
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -56,7 +42,7 @@ jobs:
         with:
           severity: info
           avatarUrl: https://pbs.twimg.com/profile_images/1494416888578953220/opn6PVoB_400x400.jpg
-          text: New version available (${{ needs.tag_release.outputs.new_version }})
+          text: A new version of Pokedex deployed
           description: to https://withered-mountain-8139.fly.dev/ by ${{ github.event.head_commit.author.name }}
           webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
       - name: Notify fail
@@ -64,10 +50,20 @@ jobs:
         if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message), '#skip') && failure() }}
         with:
           severity: error
-          avatarUrl: https://pbs.twimg.com/profile_images/1494416888578953220/opn6PVoB_400x400.jpg
           text: Build failed
           description: commit ${{ github.event.head_commit.url }} by ${{ github.event.head_commit.author.name }} broke the build :(
           webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
+  tag_release:
+    needs: [simple_deployment_pipeline]
+    runs-on: ubuntu-20.04
+    if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message), '#skip') }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Bump version and push tag
+        uses: anothrNick/github-tag-action@a2c70ae13a881faf2b4953baaa9e49731997ab36
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEFAULT_BUMP: patch
   a_test_job:
     runs-on: ubuntu-20.04
     steps:
