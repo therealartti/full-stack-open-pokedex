@@ -1,0 +1,16 @@
+name: Scheduled health-check
+
+on:
+  schedule:
+    - cron:  '0,10,20,30,40,50 16,17,18,19 * * *'
+
+jobs:
+  test_schedule:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Url health check
+        uses: jtalk/url-health-check-action@fc2fe2a9ca9c9734d992431b749b79350d771fbb
+        with:
+          url: https://withered-mountain-8139.fly.dev/
+          max-attempts: 3
+          retry-delay: 5s 
